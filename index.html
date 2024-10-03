@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Library</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="script.js" defer></script> <!-- Use defer to ensure scripts load after HTML -->
+</head>
+<body>
+
+
+    <div id="canvas-container"></div> <!-- Added canvas container -->
+    <div id="content-container" style="display: none;">
+        <video id="data-portrait-video" controls autoplay loop muted style="width: 100%;">
+            <source src="videos/dataportrait.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+            
+        <h1 id="end-message">
+            <b>Music Library</b> is a generative, data-driven design project that explores the complexities of memory and identity through my personal relationship with music. This project reflects my search to understand how personal data influences my self-conception, particularly in the context of my musical history. As I engaged with my musical data, I realized that music is not just a collection of songs; it serves as a rich tapestry of memories, emotions, and experiences that shape who I am. Each track evokes a different moment, a different feeling, creating an abstract yet deeply personal narrative. This project seeks to visualize that complexity, transforming raw data into interactive representations that invite reflection and exploration.
+        </h1> <!-- Hide h1 initially -->
+    </div>
+    
+
+    <script>
+        // JavaScript to play audio automatically when the page loads
+        window.addEventListener('load', function() {
+            const audio = document.getElementById('background-music');
+            audio.volume = 100; // Adjust volume as needed
+            audio.play().catch(error => {
+                console.log('Audio playback failed:', error);
+                // Fallback or user interaction may be required
+            });
+        });
+    </script>
+</body>
+</html>
