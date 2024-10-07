@@ -6,23 +6,24 @@
     <title>Music Library</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <script src="script.js" defer></script> <!-- Use defer to ensure scripts load after HTML -->
+    <script src="script.js" defer></script>
 </head>
 <body>
 
-
-    <div id="canvas-container"></div> <!-- Added canvas container -->
-    <div id="content-container" style="display: none;">
-        <video id="data-portrait-video" controls autoplay loop muted style="width: 100%;">
-            <source src="dataportrait.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-            
-        <h1 id="end-message">
-            <b>Music Library</b> is a generative, data-driven design project that explores the complexities of memory and identity through my personal relationship with music. This project reflects my search to understand how personal data influences my self-conception, particularly in the context of my musical history. As I engaged with my musical data, I realized that music is not just a collection of songs; it serves as a rich tapestry of memories, emotions, and experiences that shape who I am. Each track evokes a different moment, a different feeling, creating an abstract yet deeply personal narrative. This project seeks to visualize that complexity, transforming raw data into interactive representations that invite reflection and exploration.
-        </h1> <!-- Hide h1 initially -->
+    <div id="intro-container">
+        <h1>Welcome to the Music Library</h1>
+        <p>
+            Music Library explores the intricate connections between memory and identity, inspired by the artist's personal relationship with music.</p>
+        <p>Click the button below to begin the interactive visualization.</p>
+        <button id="start-button">Start Visualization</button>
     </div>
-    
+
+    <div id="canvas-container" style="display: none;"></div>
+            
+    <div id="end-message" style="display: none;">
+        Thank you for exploring the Music Library experience. Through each interaction, movement, and lyric, I hope you've reflected on the digital traces we leave and how we connect with the virtual world. This project invites you to pause, capture, and reflect on the intersection of space, data, and self.<br><br>
+        <strong>Designed by Sukyoung Youn</strong>
+    </div>
+
 </body>
 </html>
-
