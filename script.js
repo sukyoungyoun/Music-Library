@@ -3,9 +3,13 @@ let numShapes; // Number of shapes to draw
 let maxPlayDuration; // Store max play duration
 let particles = []; // Array to hold particle objects
 let lastParticleUpdate = 0; // Track time for adding new particles
-let lastLyricUpdate = 10; // Track time for updating lyrics
+let lastLyricUpdate = 1; // Track time for updating lyrics
 let animationDuration = 20000; // Duration of the animation in milliseconds
 let animationEndTime;
+let canvas;
+let spiralRadius = 100; // Adjust the radius for the spiral
+let spiralAngleIncrement = 0.1; // Adjust the angle increment for spiral tightness
+let spiralOffset = 0; // This will help animate the spiral
 
 let lyrics = [
     "Cause I'm unbreakable, I'm stronger than before",
@@ -22,69 +26,86 @@ let lyrics = [
     "Let me love you the way you deserve"
 ];
 
-let currentLyricIndex = 0; // Index to track the currently displayed lyric
-let lyricDisplayInterval = 2000; // Duration each lyric is displayed (in milliseconds)
+let currentLyricIndex = 0;
+let lyricDisplayInterval = 10;
+let lyricPositions = []; // Array to hold positions for scattered lyrics
+let lyricMovementSpeed = 10; // Speed of movement for lyrics
+let lyricMaxX; // Maximum X position for lyrics
+let lyricMaxY; // Maximum Y position for lyrics
+let animationStarted = false;
 
 function preload() {
     // Load the CSV file
     data = loadTable('topcontent.csv', 'csv', 'header');
-    // Load Italiana font
-    Italiana = loadFont('Italiana-Regular.ttf'); // Update the path to your font file
+    Italiana = loadFont('Italiana-Regular.ttf');
 }
 
 function setup() {
-    createCanvas(windowWidth, windowHeight, WEBGL); // Create canvas with full window dimensions
+    noLoop(); // Prevent automatic animation start
+    canvas = createCanvas(windowWidth, windowHeight, WEBGL);
+    canvas.parent('canvas-container'); // Append canvas to the hidden div
     noStroke();
     textAlign(CENTER);
-    frameRate(60); // Adjusted for smooth performance
+    frameRate(100);
     numShapes = data.getRowCount();
-    maxPlayDuration = getMaxPlayDuration(); // Get the maximum play duration once
+    maxPlayDuration = getMaxPlayDuration();
     background(10, 10, 20);
-    animationEndTime = millis() + animationDuration; // Set the end time for the animation
+    animationEndTime = millis() + animationDuration;
+
+    // Initialize maximum positions for lyrics
+    lyricMaxX = width / 4;
+    lyricMaxY = height / 2;
+
+    // Generate random initial positions for each lyric
+    for (let i = 0; i < lyrics.length; i++) {
+        lyricPositions.push(createVector(random(-lyricMaxX, lyricMaxX), random(-lyricMaxY, lyricMaxY)));
+    }
+
+    // Add event listener for the start button
+    let startButton = document.getElementById('start-button');
+    startButton.addEventListener('click', startVisualization);
+}
+
+function startVisualization() {
+    document.getElementById('intro-container').style.display = 'none';
+    document.getElementById('canvas-container').style.display = 'block';
+    animationStarted = true;
+    loop(); // Start the animation
 }
 
 function draw() {
+    if (!animationStarted) return;
+
     if (millis() < animationEndTime) {
-        // Create a dynamic background with moving gradients
         drawDynamicBackground();
 
-        // Update and display all particles
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.update();
             p.display();
-
-            // Remove particle if it is faded out
             if (p.isFadedOut()) {
                 particles.splice(i, 1);
             }
         }
 
-        // Continuously add new particles
-        if (millis() - lastParticleUpdate > 100) { // Adjust the time interval as needed
+        if (millis() - lastParticleUpdate > 100) {
             addNewParticles();
             lastParticleUpdate = millis();
         }
 
-        // Display lyrics at random positions on the canvas
         displayLyrics();
     } else {
-        // After the animation ends, show a black screen
         background(0);
-        noLoop(); // Stop the draw loop
-        showEndMessage(); // Show the end message
+        noLoop();
+        showEndMessage();
     }
 }
 
 function showEndMessage() {
-    let endMessage = select('#end-message'); // Select the h1 element
-    let contentContainer = select('#content-container'); // Select content container
-    contentContainer.style('display', 'block'); // Show the content container
-    endMessage.style('display', 'block'); // Change style to display the message
-    select('video').style('display', 'block'); // Show the video
+    let endMessage = select('#end-message');
+    endMessage.style('display', 'block'); // Ensure this is being executed
 }
 
-// Function to draw a dynamic background
 function drawDynamicBackground() {
     let bgColor1 = color(20, 20, 30, 50);
     let bgColor2 = color(10, 10, 20, 50);
@@ -97,85 +118,69 @@ function drawDynamicBackground() {
     }
 }
 
-// Function to add new particles
 function addNewParticles() {
     let randomIndex = floor(random(numShapes));
     let song = data.getString(randomIndex, "Content");
     let playDuration = int(data.getString(randomIndex, "Play Duration Milliseconds"));
     let rank = randomIndex + 1;
 
-    // Map play duration to a dynamic particle count and size
-    let numParticles = map(playDuration, 0, maxPlayDuration, 0.1, 5);
-    let particleSize = map(playDuration, 0, maxPlayDuration, 0.1, 2); // Adjusted size for 3D
+    let numParticles = map(playDuration, 0, maxPlayDuration, 0.01, 3);
+    let particleSize = map(playDuration, 0, maxPlayDuration, 0.1, 10);
 
-    // Create and store new particles
     for (let j = 0; j < numParticles; j++) {
         particles.push(new Particle(rank, song, particleSize, playDuration));
     }
 }
 
-// Particle class to represent each music note
 class Particle {
     constructor(rank, song, size, playDuration) {
         this.song = song;
         this.size = size;
         this.angle = random(TWO_PI);
-        this.radius = random(2000, 0.0001); // Adjust radius for better dynamics
-        this.lifetime = 255; // Full opacity (0-255)
-        this.position = createVector(cos(this.angle) * this.radius, sin(this.angle) * this.radius, random(-300, 300)); // Added Z position
-        this.playDuration = playDuration; // Store play duration for insights
-        this.color = this.getColorBasedOnDuration(); // Get color based on duration
-        this.rank = rank; // Store rank for display
+        this.radius = random(2000, 0.01);
+        this.lifetime = 255;
+        this.position = createVector(cos(this.angle) * this.radius, sin(this.angle) * this.radius, random(-300, 300));
+        this.playDuration = playDuration;
+        this.color = this.getColorBasedOnDuration();
+        this.rank = rank;
     }
 
     getColorBasedOnDuration() {
         return this.playDuration > 20000 ? 
             color(255, 74, 74, this.lifetime) : 
-            color(135, 255, 235, this.lifetime); // Soft blue for shorter durations
+            color(135, 255, 235, this.lifetime);
     }
 
     update() {
-        // Update particle position with sinusoidal motion for artistic effect
-        this.angle += 500; // Control the flow speed
-        this.radius += sin(frameCount * 3) * 39; // Vary radius for depth
+        this.angle += 500;
+        this.radius += sin(frameCount * 4) * 39;
         this.position.x = cos(this.angle) * this.radius;
         this.position.y = sin(this.angle) * this.radius;
-
-        // Add subtle z-axis movement
-        this.position.z += map(sin(frameCount * 2), -1, 1, -1, 1); 
-
-        // Fade out over time
-        this.lifetime -= 1; // Decrease opacity
+        this.position.z += map(sin(frameCount * 2), -1, 1, -1, 1);
+        this.lifetime -= 1;
     }
 
     display() {
-        push(); // Start a new drawing state
-        translate(this.position.x, this.position.y, this.position.z); // Move to particle position
-        fill(this.color); // Set color with fading effect
+        push();
+        translate(this.position.x, this.position.y, this.position.z);
+        fill(this.color);
         noStroke();
-
-        // Draw different shapes based on the particle size
         if (this.size > 10) {
-            // Draw box for larger particles
-            box(this.size); // 3D box shape
+            box(this.size);
         } else {
-            // Draw sphere for smaller particles
-            sphere(this.size); // 3D sphere shape
+            sphere(this.size);
         }
-
-        // Display song name and rank near the particle with a dynamic size
-        textSize(map(this.size, 5, 2, 1, 4)); // Dynamic text size based on particle size
-        fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], this.lifetime); // Match text color with particle opacity
-        text(`${this.song} (Rank: ${this.rank})`, 0, -this.size * 0.5); // Show song title and rank
-        pop(); // Restore original drawing state
+        textSize(map(this.size, 5, 2, 1, 4));
+        fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], this.lifetime);
+        text(`${this.song} (Rank: ${this.rank})`, 0, -this.size * 0.5);
+        pop();
     }
 
     isFadedOut() {
-        return this.lifetime < 0; // Check if the particle is faded out
+        return this.lifetime < 0;
     }
 }
 
-// Function to get the maximum play duration
 function getMaxPlayDuration() {
     let maxDuration = 0;
     for (let i = 0; i < numShapes; i++) {
@@ -187,28 +192,32 @@ function getMaxPlayDuration() {
     return maxDuration;
 }
 
-// Function to display song lyrics
 function displayLyrics() {
-    fill(255); // White color for lyrics
-    textSize(15); // Set text size for lyrics
-    textFont(Italiana); // Use Italiana font
-    let elapsedTime = millis() - lastLyricUpdate;
+    fill(255);
+    textSize(3); // Increased text size for better visibility
+    textFont(Italiana);
+    
+    // Update the spiral offset for animation
+    spiralOffset += 0.03; // Control the speed of the spiral expansion
 
-    if (elapsedTime > lyricDisplayInterval) {
-        // Update lyric display
-        currentLyricIndex = (currentLyricIndex + 1) % lyrics.length; // Loop through lyrics
-        lastLyricUpdate = millis();
+    // Calculate the position of each lyric in a spiral pattern
+    for (let i = 0; i < lyrics.length; i++) {
+        // Calculate the angle for the current lyric
+        let angle = i * spiralAngleIncrement + spiralOffset; // Adding offset to animate the spiral
+        let radius = spiralRadius + (i * 10); // Increase radius for each lyric to space them out
+
+        // Convert polar coordinates to Cartesian coordinates
+        let x = radius * cos(angle);
+        let y = radius * sin(angle);
+
+        // Display the current lyric at its spiral position
+        text(lyrics[i], x, y);
     }
 
-    // Generate random positions for the lyrics
-    let xPos = random(-width / 4, width / 4);
-    let yPos = random(-height / 4, height / 4);
-
-    // Display current lyric at a random position
-    text(lyrics[currentLyricIndex], xPos, yPos);
-}
-
-// Adjust the canvas size when the window is resized
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+    // Change the current lyric displayed based on elapsed time
+    let elapsedTime = millis() - lastLyricUpdate;
+    if (elapsedTime > lyricDisplayInterval * 1000) { // Adjusted to seconds
+        currentLyricIndex = (currentLyricIndex + 1) % lyrics.length;
+        lastLyricUpdate = millis();
+    }
 }
