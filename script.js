@@ -40,6 +40,12 @@ function preload() {
     Italiana = loadFont('Italiana-Regular.ttf');
 }
 
+// This should be placed OUTSIDE setup()
+window.addEventListener('DOMContentLoaded', function () {
+    let startButton = document.getElementById('start-button');
+    startButton.addEventListener('click', startVisualization);
+});
+
 function setup() {
     noLoop(); // Prevent automatic animation start
     canvas = createCanvas(windowWidth, windowHeight, WEBGL);
@@ -60,18 +66,23 @@ function setup() {
     for (let i = 0; i < lyrics.length; i++) {
         lyricPositions.push(createVector(random(-lyricMaxX, lyricMaxX), random(-lyricMaxY, lyricMaxY)));
     }
-
-    // Add event listener for the start button
-    let startButton = document.getElementById('start-button');
-    startButton.addEventListener('click', startVisualization);
 }
+
 
 function startVisualization() {
     document.getElementById('intro-container').style.display = 'none';
     document.getElementById('canvas-container').style.display = 'block';
-    document.getElementById("bg-music").play();
+
+    const bgMusic = document.getElementById("bg-music");
+    if (bgMusic) {
+        bgMusic.volume = 0.5; // optional
+        bgMusic.play().catch(error => {
+            console.log("Audio play failed due to autoplay policy:", error);
+        });
+    }
+
     animationStarted = true;
-    loop(); // Start the animation
+    loop(); // Start your animation (e.g., p5.js)
 }
 
 function draw() {
