@@ -69,6 +69,7 @@ function setup() {
 function startVisualization() {
     document.getElementById('intro-container').style.display = 'none';
     document.getElementById('canvas-container').style.display = 'block';
+    document.getElementById("bg-music").play();
     animationStarted = true;
     loop(); // Start the animation
 }
